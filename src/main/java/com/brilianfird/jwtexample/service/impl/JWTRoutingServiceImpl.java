@@ -15,33 +15,40 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JWTRoutingServiceImpl implements JWTRoutingService {
 
-    private final List<JWTService> jwtServices;
+  private final List<JWTService> jwtServices;
 
-    @Override
-    public JsonWebSignature createJWT(SigningAlgorithm signingAlgorithm, String username, Map<String, Object> payload) throws Exception {
-        return jwtServices.stream()
-                .filter(jwtService -> jwtService.getSupportedAlgorithm() == signingAlgorithm)
-                .findFirst()
-                .map(jwtService -> jwtService.create(username, payload))
-                .orElseThrow(() -> new Exception("Signing Algorithm is not supported"));
-    }
+  @Override
+  public JsonWebSignature createJWT(
+      SigningAlgorithm signingAlgorithm, String username, Map<String, Object> payload)
+      throws Exception {
+    return jwtServices.stream()
+        .filter(jwtService -> jwtService.getSupportedAlgorithm() == signingAlgorithm)
+        .findFirst()
+        .map(jwtService -> jwtService.create(username, payload))
+        .orElseThrow(() -> new Exception("Signing Algorithm is not supported"));
+  }
 
-    @Override
-    public Boolean validateJWT(String jwt) throws Exception {
-        JsonWebSignature jsonWebSignature = new JsonWebSignature();
-        jsonWebSignature.setCompactSerialization(jwt);
+  @Override
+  public Boolean validateJWT(String jwt) throws Exception {
+    JsonWebSignature jsonWebSignature = new JsonWebSignature();
+    jsonWebSignature.setCompactSerialization(jwt);
 
-        return jwtServices.stream()
-                .filter(jwtService -> jwtService.getSupportedAlgorithm().name().equalsIgnoreCase(jsonWebSignature.getAlgorithmHeaderValue()))
-                .findFirst()
-                .map(jwtService -> {
-                    try {
-                        return jwtService.validate(jwt);
-                    } catch (JoseException e) {
-                        throw new RuntimeException();
-                    }
-                })
-                .orElseThrow(() -> new Exception("Signing Algorithm is not supported"));
-
-    }
+    return jwtServices.stream()
+        .filter(
+            jwtService ->
+                jwtService
+                    .getSupportedAlgorithm()
+                    .name()
+                    .equalsIgnoreCase(jsonWebSignature.getAlgorithmHeaderValue()))
+        .findFirst()
+        .map(
+            jwtService -> {
+              try {
+                return jwtService.validate(jwt);
+              } catch (JoseException e) {
+                throw new RuntimeException();
+              }
+            })
+        .orElseThrow(() -> new Exception("Signing Algorithm is not supported"));
+  }
 }

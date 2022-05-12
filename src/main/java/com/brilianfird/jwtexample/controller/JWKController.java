@@ -9,12 +9,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class JWKController {
-    private final PublicJsonWebKey ecdsaPublicJsonWebKey;
+  private final PublicJsonWebKey ecdsaPublicJsonWebKey;
 
-    @GetMapping("/jwk")
-    public String jwk() {
-        JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
-        jsonWebKeySet.addJsonWebKey(ecdsaPublicJsonWebKey);
-        return jsonWebKeySet.toJson();
-    }
+  @GetMapping("/jwk")
+  public String jwk() {
+    JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
+    jsonWebKeySet.addJsonWebKey(ecdsaPublicJsonWebKey);
+    return jsonWebKeySet.toJson();
+  }
 }

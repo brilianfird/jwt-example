@@ -9,14 +9,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class ResourceController {
-    private final JWTRoutingService jwtRoutingService;
+  private final JWTRoutingService jwtRoutingService;
 
-    @GetMapping("/resource")
-    public Boolean getResource(@RequestHeader("Authorization") String authorization) {
-        try {
-            return jwtRoutingService.validateJWT(authorization);
-        } catch (Exception e) {
-            return false;
-        }
+  @GetMapping("/resource")
+  public Boolean getResource(@RequestHeader("Authorization") String authorization) {
+    try {
+      return jwtRoutingService.validateJWT(authorization);
+    } catch (Exception e) {
+      return false;
     }
+  }
 }

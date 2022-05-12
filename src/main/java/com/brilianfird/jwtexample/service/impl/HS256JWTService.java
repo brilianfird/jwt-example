@@ -16,37 +16,37 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class HS256JWTService implements JWTService {
 
-    private final HmacKey hmacKey;
+  private final HmacKey hmacKey;
 
-    @Override
-    public JsonWebSignature create(String username, Map<String, Object> payload) {
-        JsonWebSignature jsonWebSignature = new JsonWebSignature();
+  @Override
+  public JsonWebSignature create(String username, Map<String, Object> payload) {
+    JsonWebSignature jsonWebSignature = new JsonWebSignature();
 
-        JwtClaims jwtClaims = new JwtClaims();
-        payload.forEach(jwtClaims::setClaim);
-        jwtClaims.setIssuedAtToNow();
-        jwtClaims.setIssuer("https://codecurated.com");
-        jwtClaims.setExpirationTimeMinutesInTheFuture(60);
-        jwtClaims.setSubject(username);
+    JwtClaims jwtClaims = new JwtClaims();
+    payload.forEach(jwtClaims::setClaim);
+    jwtClaims.setIssuedAtToNow();
+    jwtClaims.setIssuer("https://codecurated.com");
+    jwtClaims.setExpirationTimeMinutesInTheFuture(60);
+    jwtClaims.setSubject(username);
 
-        jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
-        jsonWebSignature.setKey(hmacKey);
-        jsonWebSignature.setPayload(jwtClaims.toJson());
+    jsonWebSignature.setAlgorithmHeaderValue(AlgorithmIdentifiers.HMAC_SHA256);
+    jsonWebSignature.setKey(hmacKey);
+    jsonWebSignature.setPayload(jwtClaims.toJson());
 
-        return jsonWebSignature;
-    }
+    return jsonWebSignature;
+  }
 
-    @Override
-    public Boolean validate(String jwt) throws JoseException {
-        JsonWebSignature jsonWebSignature = new JsonWebSignature();
-        jsonWebSignature.setCompactSerialization(jwt);
+  @Override
+  public Boolean validate(String jwt) throws JoseException {
+    JsonWebSignature jsonWebSignature = new JsonWebSignature();
+    jsonWebSignature.setCompactSerialization(jwt);
 
-        jsonWebSignature.setKey(hmacKey);
-        return jsonWebSignature.verifySignature();
-    }
+    jsonWebSignature.setKey(hmacKey);
+    return jsonWebSignature.verifySignature();
+  }
 
-    @Override
-    public SigningAlgorithm getSupportedAlgorithm() {
-        return SigningAlgorithm.HS256;
-    }
+  @Override
+  public SigningAlgorithm getSupportedAlgorithm() {
+    return SigningAlgorithm.HS256;
+  }
 }

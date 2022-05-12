@@ -15,15 +15,15 @@ import java.util.HashMap;
 @RequiredArgsConstructor
 public class JWTController {
 
-    private final JWTRoutingService jwtRoutingService;
+  private final JWTRoutingService jwtRoutingService;
 
-    @PostMapping("/jwt")
-    public JWTResponse createJwt(@RequestBody JWTRequest jwtRequest) throws Exception {
-        HashMap<String, Object> hashmap = new HashMap<>();
-        hashmap.put("scopes", jwtRequest.scopes());
-        JsonWebSignature jwt = jwtRoutingService.createJWT(jwtRequest.signingAlgorithm(), jwtRequest.username(), hashmap);
+  @PostMapping("/jwt")
+  public JWTResponse createJwt(@RequestBody JWTRequest jwtRequest) throws Exception {
+    HashMap<String, Object> hashmap = new HashMap<>();
+    hashmap.put("scopes", jwtRequest.scopes());
+    JsonWebSignature jwt =
+        jwtRoutingService.createJWT(jwtRequest.signingAlgorithm(), jwtRequest.username(), hashmap);
 
-        return new JWTResponse(jwt.getCompactSerialization());
-    }
-
+    return new JWTResponse(jwt.getCompactSerialization());
+  }
 }
