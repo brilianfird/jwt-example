@@ -6,15 +6,17 @@ import lombok.RequiredArgsConstructor;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.HmacKey;
-import org.jose4j.lang.JoseException;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class HS256JWTService implements JWTService {
+public class HS256JWTServiceImpl implements JWTService {
 
   private final HmacKey hmacKey;
 
@@ -37,12 +39,14 @@ public class HS256JWTService implements JWTService {
   }
 
   @Override
-  public Boolean validate(String jwt) throws JoseException {
-    JsonWebSignature jsonWebSignature = new JsonWebSignature();
-    jsonWebSignature.setCompactSerialization(jwt);
-
-    jsonWebSignature.setKey(hmacKey);
-    return jsonWebSignature.verifySignature();
+  public JwtClaims validate(String jwt) throws InvalidJwtException {
+    JwtConsumer jwtConsumer =
+        new JwtConsumerBuilder()
+            .setSkipDefaultAudienceValidation()
+            .setVerificationKey(hmacKey)
+            .build();
+    jwtConsumer.processToClaims(jwt);
+    return jwtConsumer.processToClaims(jwt);
   }
 
   @Override

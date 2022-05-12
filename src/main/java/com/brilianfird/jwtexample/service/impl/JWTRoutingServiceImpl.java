@@ -5,7 +5,8 @@ import com.brilianfird.jwtexample.service.JWTRoutingService;
 import com.brilianfird.jwtexample.service.JWTService;
 import lombok.RequiredArgsConstructor;
 import org.jose4j.jws.JsonWebSignature;
-import org.jose4j.lang.JoseException;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,7 +30,8 @@ public class JWTRoutingServiceImpl implements JWTRoutingService {
   }
 
   @Override
-  public Boolean validateJWT(String jwt) throws Exception {
+  public JwtClaims validateJWT(String jwt) throws Exception {
+
     JsonWebSignature jsonWebSignature = new JsonWebSignature();
     jsonWebSignature.setCompactSerialization(jwt);
 
@@ -45,7 +47,7 @@ public class JWTRoutingServiceImpl implements JWTRoutingService {
             jwtService -> {
               try {
                 return jwtService.validate(jwt);
-              } catch (JoseException e) {
+              } catch (InvalidJwtException e) {
                 throw new RuntimeException();
               }
             })

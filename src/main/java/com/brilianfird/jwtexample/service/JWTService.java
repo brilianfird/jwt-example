@@ -2,14 +2,15 @@ package com.brilianfird.jwtexample.service;
 
 import com.brilianfird.jwtexample.model.SigningAlgorithm;
 import org.jose4j.jws.JsonWebSignature;
-import org.jose4j.lang.JoseException;
+import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.InvalidJwtException;
 
 import java.util.Map;
 
 public interface JWTService {
   JsonWebSignature create(String username, Map<String, Object> payload);
 
-  Boolean validate(String jwt) throws JoseException;
+  JwtClaims validate(String jwt) throws InvalidJwtException;
 
   SigningAlgorithm getSupportedAlgorithm();
 }

@@ -32,7 +32,7 @@ public class KeyConfiguration {
   }
 
   @Bean
-  public PublicJsonWebKey ecdsaPublicJsonWebKey()
+  public PublicJsonWebKey es256PublicJsonWebKey()
       throws NoSuchAlgorithmException, JoseException, InvalidKeySpecException {
     PKCS8EncodedKeySpec formatted_private =
         new PKCS8EncodedKeySpec(
