@@ -2,8 +2,12 @@ package com.brilianfird.jwtexample.configuration;
 
 import com.brilianfird.jwtexample.configuration.properties.KeyProperties;
 import lombok.RequiredArgsConstructor;
+import org.jose4j.jwk.HttpsJwks;
 import org.jose4j.jwk.PublicJsonWebKey;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.keys.HmacKey;
+import org.jose4j.keys.resolvers.HttpsJwksVerificationKeyResolver;
 import org.jose4j.lang.JoseException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +36,14 @@ public class KeyConfiguration {
   }
 
   @Bean
+  public JwtConsumer hmacJWTConsumer(HmacKey hmacKey) {
+    return new JwtConsumerBuilder()
+        .setSkipDefaultAudienceValidation()
+        .setVerificationKey(hmacKey)
+        .build();
+  }
+
+  @Bean
   public PublicJsonWebKey es256PublicJsonWebKey()
       throws NoSuchAlgorithmException, JoseException, InvalidKeySpecException {
     PKCS8EncodedKeySpec formatted_private =
@@ -49,5 +61,14 @@ public class KeyConfiguration {
     publicJsonWebKey.setPrivateKey(privateKey);
     publicJsonWebKey.setKeyId("2022-05-08");
     return publicJsonWebKey;
+  }
+
+  @Bean
+  public JwtConsumer es256JWTConsumer() {
+    return new JwtConsumerBuilder()
+        .setSkipDefaultAudienceValidation()
+        .setVerificationKeyResolver(
+            new HttpsJwksVerificationKeyResolver(new HttpsJwks("http://localhost:8080/jwk")))
+        .build();
   }
 }

@@ -3,15 +3,12 @@ package com.brilianfird.jwtexample.service.impl;
 import com.brilianfird.jwtexample.model.SigningAlgorithm;
 import com.brilianfird.jwtexample.service.JWTService;
 import lombok.RequiredArgsConstructor;
-import org.jose4j.jwk.HttpsJwks;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
-import org.jose4j.jwt.consumer.JwtConsumerBuilder;
-import org.jose4j.keys.resolvers.HttpsJwksVerificationKeyResolver;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -21,6 +18,7 @@ import java.util.Map;
 public class ES256JWTServiceImpl implements JWTService {
 
   private final PublicJsonWebKey es256PublicJsonWebKey;
+  private final JwtConsumer es256JWTConsumer;
 
   @Override
   public JsonWebSignature create(String username, Map<String, Object> payload) {
@@ -43,15 +41,7 @@ public class ES256JWTServiceImpl implements JWTService {
 
   @Override
   public JwtClaims validate(String jwt) throws InvalidJwtException {
-
-    JwtConsumer jwtConsumer =
-        new JwtConsumerBuilder()
-            .setSkipDefaultAudienceValidation()
-            .setVerificationKeyResolver(
-                new HttpsJwksVerificationKeyResolver(new HttpsJwks("http://localhost:8080/jwk")))
-            .build();
-    jwtConsumer.processToClaims(jwt);
-    return jwtConsumer.processToClaims(jwt);
+    return es256JWTConsumer.processToClaims(jwt);
   }
 
   @Override
