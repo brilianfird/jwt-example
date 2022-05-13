@@ -46,7 +46,7 @@ public class JWTRoutingServiceImpl implements JWTRoutingService {
         .map(
             jwtService -> {
               try {
-                return jwtService.validate(jwt);
+                return jwtService.validateJWTAndGetClaims(jwt);
               } catch (InvalidJwtException e) {
                 throw new RuntimeException();
               }

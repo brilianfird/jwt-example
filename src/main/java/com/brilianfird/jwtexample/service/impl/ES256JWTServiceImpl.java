@@ -35,12 +35,13 @@ public class ES256JWTServiceImpl implements JWTService {
         AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
     jsonWebSignature.setKey(es256PublicJsonWebKey.getPrivateKey());
     jsonWebSignature.setPayload(jwtClaims.toJson());
+    jsonWebSignature.setKeyIdHeaderValue(es256PublicJsonWebKey.getKeyId());
 
     return jsonWebSignature;
   }
 
   @Override
-  public JwtClaims validate(String jwt) throws InvalidJwtException {
+  public JwtClaims validateJWTAndGetClaims(String jwt) throws InvalidJwtException {
     return es256JWTConsumer.processToClaims(jwt);
   }
 

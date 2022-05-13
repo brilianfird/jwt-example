@@ -39,7 +39,7 @@ public class HS256JWTServiceImpl implements JWTService {
   }
 
   @Override
-  public JwtClaims validate(String jwt) throws InvalidJwtException {
+  public JwtClaims validateJWTAndGetClaims(String jwt) throws InvalidJwtException {
     JwtClaims jwtClaims = hmacJWTConsumer.processToClaims(jwt);
     return jwtClaims;
   }

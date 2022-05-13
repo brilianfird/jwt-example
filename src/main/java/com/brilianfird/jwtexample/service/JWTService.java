@@ -10,7 +10,7 @@ import java.util.Map;
 public interface JWTService {
   JsonWebSignature create(String username, Map<String, Object> payload);
 
-  JwtClaims validate(String jwt) throws InvalidJwtException;
+  JwtClaims validateJWTAndGetClaims(String jwt) throws InvalidJwtException;
 
   SigningAlgorithm getSupportedAlgorithm();
 }
