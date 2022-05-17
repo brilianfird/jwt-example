@@ -13,6 +13,10 @@ import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.jwt.JwtClaims;
+import org.jose4j.jwt.consumer.JwtConsumer;
+import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.jwt.consumer.JwtContext;
+import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.EllipticCurves;
 import org.jose4j.keys.HmacKey;
 import org.junit.jupiter.api.Test;
@@ -43,29 +47,47 @@ public class Jose4j {
   }
 
   @Test
-  public void JWK_ECDSA() throws Exception {
+  public void JWS_noAlg() throws Exception {
+
     JwtClaims jwtClaims = new JwtClaims();
-    jwtClaims.setClaim("hello", "world");
-
-    EllipticCurveJsonWebKey senderJwk = EcJwkGenerator.generateJwk(EllipticCurves.P256);
-    senderJwk.setKeyId("2022-05-01");
-    EllipticCurveJsonWebKey senderJwk2 = EcJwkGenerator.generateJwk(EllipticCurves.P256);
-    senderJwk2.setKeyId("2020-01-01");
-
-    JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
-    jsonWebKeySet.addJsonWebKey(senderJwk);
-    jsonWebKeySet.addJsonWebKey(senderJwk2);
+    jwtClaims.setSubject("7560755e-f45d-4ebb-a098-b8971c02ebef");
+    jwtClaims.setIssuedAtToNow();
+    jwtClaims.setExpirationTimeMinutesInTheFuture(10080);
+    jwtClaims.setIssuer("https://codecurated.com");
+    jwtClaims.setStringClaim("name", "Brilian Firdaus");
+    jwtClaims.setStringClaim("email", "brilianfird@gmail.com");
+    jwtClaims.setClaim("email_verified", true);
 
     JsonWebSignature jws = new JsonWebSignature();
-    jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
-    jws.setKeyIdHeaderValue("2022-05-01");
+
     jws.setPayload(jwtClaims.toJson());
-    jws.setJwkHeader(senderJwk);
-    jws.setKey(senderJwk.getPrivateKey());
+    jws.setAlgorithmConstraints(AlgorithmConstraints.NO_CONSTRAINTS);
+    jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.NONE);
 
     String jwt = jws.getCompactSerialization();
-    System.out.println(jwt);
-    System.out.println(senderJwk.toJson());
+    System.out.println("JWT: " + jwt);
+  }
+
+  @Test
+  public void JWS_consume() throws Exception {
+    String jwt = "eyJhbGciOiJub25lIn0.eyJzdWIiOiI3NTYwNzU1ZS1mNDVkLTRlYmItYTA5OC1iODk3MWMwMmViZWYiLCJpYXQiOjE2NTI1NTYyN" +
+                "jYsImV4cCI6MTY1MzE2MTA2NiwiaXNzIjoiaHR0cHM6Ly9jb2RlY3VyYXRlZC5jb20iLCJuYW1lIjoiQnJpbGlhbiBGaXJkYXVzIiw" +
+            "iZW1haWwiOiJicmlsaWFuZmlyZEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.";
+
+    JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+            .setJwsAlgorithmConstraints(AlgorithmConstraints.NO_CONSTRAINTS) // required for NONE alg
+            .setDisableRequireSignature() // disable signature requirement
+            .setRequireIssuedAt() // require the JWT to have iat field
+            .setRequireExpirationTime() // require the JWT to have exp field
+            .setExpectedIssuer("https://codecurated.com") // expect the iss to be https://codecurated.com
+            .build();
+
+    JwtContext jwtContext = jwtConsumer.process(jwt); // process JWT to jwt context
+
+    JsonWebSignature jws = (JsonWebSignature) jwtContext.getJoseObjects().get(0); // get the JWS
+    JwtClaims jwtClaims = jwtContext.getJwtClaims(); // get claims
+
+    System.out.println(jwtClaims.getClaimsMap()); // print claims as map
   }
 
   @Test
@@ -91,6 +113,32 @@ public class Jose4j {
     String jwt = jws.getCompactSerialization();
     System.out.println("Key: " + Base64.getEncoder().encodeToString(key));
     System.out.println("JWT: " + jwt);
+  }
+
+  @Test
+  public void JWK_ECDSA() throws Exception {
+    JwtClaims jwtClaims = new JwtClaims();
+    jwtClaims.setClaim("hello", "world");
+
+    EllipticCurveJsonWebKey senderJwk = EcJwkGenerator.generateJwk(EllipticCurves.P256);
+    senderJwk.setKeyId("2022-05-01");
+    EllipticCurveJsonWebKey senderJwk2 = EcJwkGenerator.generateJwk(EllipticCurves.P256);
+    senderJwk2.setKeyId("2020-01-01");
+
+    JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
+    jsonWebKeySet.addJsonWebKey(senderJwk);
+    jsonWebKeySet.addJsonWebKey(senderJwk2);
+
+    JsonWebSignature jws = new JsonWebSignature();
+    jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
+    jws.setKeyIdHeaderValue("2022-05-01");
+    jws.setPayload(jwtClaims.toJson());
+    jws.setJwkHeader(senderJwk);
+    jws.setKey(senderJwk.getPrivateKey());
+
+    String jwt = jws.getCompactSerialization();
+    System.out.println(jwt);
+    System.out.println(senderJwk.toJson());
   }
 
   @Test
