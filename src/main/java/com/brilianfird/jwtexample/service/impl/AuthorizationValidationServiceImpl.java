@@ -1,5 +1,6 @@
 package com.brilianfird.jwtexample.service.impl;
 
+import com.brilianfird.jwtexample.model.exception.AuthorizationException;
 import com.brilianfird.jwtexample.service.AuthorizationValidationService;
 import com.brilianfird.jwtexample.service.JWTRoutingService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,7 @@ public class AuthorizationValidationServiceImpl implements AuthorizationValidati
 
     for (String scope : scopes) {
       if (!jwtScopeMap.getOrDefault(scope, Boolean.FALSE)) {
-        throw new RuntimeException();
+        throw new AuthorizationException();
       }
     }
     return true;
