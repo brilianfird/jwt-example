@@ -6,8 +6,10 @@ import org.jose4j.jwe.JsonWebEncryption;
 import org.jose4j.jwe.KeyManagementAlgorithmIdentifiers;
 import org.jose4j.jwk.EcJwkGenerator;
 import org.jose4j.jwk.EllipticCurveJsonWebKey;
+import org.jose4j.jwk.HttpsJwks;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -16,14 +18,22 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
-import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.EllipticCurves;
 import org.jose4j.keys.HmacKey;
+import org.jose4j.keys.resolvers.HttpsJwksVerificationKeyResolver;
+import org.jose4j.lang.JoseException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.security.Key;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 public class Jose4j {
@@ -155,14 +165,11 @@ public class Jose4j {
 
   @Test
   public void JWS_ES256() throws Exception {
-
     // generate  key
     EllipticCurveJsonWebKey ellipticCurveJsonWebKey = EcJwkGenerator.generateJwk(EllipticCurves.P256);
 
     JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
     jsonWebKeySet.addJsonWebKey(ellipticCurveJsonWebKey);
-
-
 
     JwtClaims jwtClaims = new JwtClaims();
     jwtClaims.setSubject("7560755e-f45d-4ebb-a098-b8971c02ebef"); // set sub
@@ -205,6 +212,87 @@ public class Jose4j {
     Assertions.assertEquals(jws.getAlgorithmHeaderValue(), consumedJWS.getAlgorithmHeaderValue());
 
     //The key won't be equal because it's asymmetric
+    Assertions.assertNotEquals(jws.getKey(), consumedJWS.getKey());
+    Assertions.assertEquals(jwtClaims.toJson(), consumedJWTClaims.toJson());
+  }
+
+  public PublicJsonWebKey es256PublicJsonWebKey()
+      throws NoSuchAlgorithmException, JoseException, InvalidKeySpecException {
+    PKCS8EncodedKeySpec formatted_private =
+        new PKCS8EncodedKeySpec(
+            Base64.getDecoder()
+                .decode(
+                    "MEECAQAwEwYHKoZIzj0CAQYIKoZIzj0DAQcEJzAlAgEBBCBW+TML/g3QbmRbnFTaDNyHuAvmQ9XgcO8ci/I42Y+mlQ=="));
+    X509EncodedKeySpec formatted_public =
+        new X509EncodedKeySpec(
+            Base64.getDecoder()
+                .decode(
+                    "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEadEbLi2ruhj1YYBYw5iuekpzrFk563Q4TsFdAxhAKoATI9/o99P7MUQpbQ1TL/6VBRj3xnpnKVpkiElyI7yotw=="));
+
+    KeyFactory keyFactory = KeyFactory.getInstance("EC");
+    PublicKey publicKey = keyFactory.generatePublic(formatted_public);
+    PrivateKey privateKey = keyFactory.generatePrivate(formatted_private);
+
+    PublicJsonWebKey publicJsonWebKey = PublicJsonWebKey.Factory.newPublicJwk(publicKey);
+    publicJsonWebKey.setPrivateKey(privateKey);
+    publicJsonWebKey.setKeyId("2022-05-08");
+    return publicJsonWebKey;
+  }
+
+  @Test
+  public void JWS_ES256_JWK() throws Exception {
+    // generate  key
+    PublicJsonWebKey ellipticCurveJsonWebKey = es256PublicJsonWebKey();
+
+    JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
+    jsonWebKeySet.addJsonWebKey(ellipticCurveJsonWebKey);
+
+    JwtClaims jwtClaims = new JwtClaims();
+    jwtClaims.setSubject("7560755e-f45d-4ebb-a098-b8971c02ebef"); // set sub
+    jwtClaims.setIssuedAtToNow(); // set iat
+    jwtClaims.setExpirationTimeMinutesInTheFuture(10080); // set exp
+    jwtClaims.setIssuer("https://codecurated.com"); // set iss
+    jwtClaims.setStringClaim("name", "Brilian Firdaus"); // set name
+    jwtClaims.setStringClaim("email", "brilianfird@gmail.com"); // set email
+    jwtClaims.setClaim("email_verified", true); // set email_verified
+
+    JsonWebSignature jws = new JsonWebSignature();
+    // Set alg header as ECDSA_USING_P256_CURVE_AND_SHA256
+    jws.setAlgorithmHeaderValue(AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256);
+    // Set key to the generated private key
+    jws.setKey(ellipticCurveJsonWebKey.getPrivateKey());
+    jws.setPayload(jwtClaims.toJson());
+
+    String jwt = jws.getCompactSerialization(); // produce eyJ.. JWT
+
+    // we don't need NO_CONSTRAINT and disable require signature anymore
+    HttpsJwks httpsJkws = new HttpsJwks("http://localhost:8080/jwk");
+    HttpsJwksVerificationKeyResolver verificationKeyResolver =
+        new HttpsJwksVerificationKeyResolver(httpsJkws);
+
+    JwtConsumer jwtConsumer =
+        new JwtConsumerBuilder()
+            .setRequireIssuedAt()
+            .setRequireExpirationTime()
+            .setExpectedIssuer("https://codecurated.com")
+            // set the verification key as the public key
+            .setVerificationKeyResolver(verificationKeyResolver)
+            .build();
+
+    // process JWT to jwt context
+    JwtContext jwtContext = jwtConsumer.process(jwt);
+    // get JWS object
+    JsonWebSignature consumedJWS = (JsonWebSignature) jwtContext.getJoseObjects().get(0);
+    // get claims
+    JwtClaims consumedJWTClaims = jwtContext.getJwtClaims();
+
+    // print claims as map
+    System.out.println(consumedJWTClaims.getClaimsMap());
+
+    // Assert header, key, and claims
+    Assertions.assertEquals(jws.getAlgorithmHeaderValue(), consumedJWS.getAlgorithmHeaderValue());
+
+    // The key won't be equal because it's asymmetric
     Assertions.assertNotEquals(jws.getKey(), consumedJWS.getKey());
     Assertions.assertEquals(jwtClaims.toJson(), consumedJWTClaims.toJson());
   }
@@ -271,84 +359,6 @@ public class Jose4j {
 
     String plaintext = receiverJwe.getPlaintextString();
 
-    System.out.println("plaintext: " + plaintext);
-  }
-
-  @Test
-  public void testing() throws Exception {
-    //
-    // An example showing the use of JSON Web Encryption (JWE) to encrypt and then decrypt some
-    // content
-    // using a symmetric key and direct encryption.
-    //
-
-    // The content to be encrypted
-    String message = "This is a JWE";
-
-    // The shared secret or shared symmetric key represented as a octet sequence JSON Web Key (JWK)
-    String jwkJson = "{\"kty\":\"oct\",\"k\":\"Fdh9u8rINxfivbrianbbVT1u232VQBZYKx1HGAGPt2I\"}";
-    JsonWebKey jwk = JsonWebKey.Factory.newJwk(jwkJson);
-
-    // Create a new Json Web Encryption object
-    JsonWebEncryption senderJwe = new JsonWebEncryption();
-
-    // The plaintext of the JWE is the message that we want to encrypt.
-    senderJwe.setPlaintext(message);
-
-    // Set the "alg" header, which indicates the key management mode for this JWE.
-    // In this example we are using the direct key management mode, which means
-    // the given key will be used directly as the content encryption key.
-    senderJwe.setAlgorithmHeaderValue(KeyManagementAlgorithmIdentifiers.DIRECT);
-
-    // Set the "enc" header, which indicates the content encryption algorithm to be used.
-    // This example is using AES_128_CBC_HMAC_SHA_256 which is a composition of AES CBC
-    // and HMAC SHA2 that provides authenticated encryption.
-    senderJwe.setEncryptionMethodHeaderParameter(
-        ContentEncryptionAlgorithmIdentifiers.AES_128_CBC_HMAC_SHA_256);
-
-    // Set the key on the JWE. In this case, using direct mode, the key will used directly as
-    // the content encryption key. AES_128_CBC_HMAC_SHA_256, which is being used to encrypt the
-    // content requires a 256 bit key.
-    senderJwe.setKey(jwk.getKey());
-
-    // Produce the JWE compact serialization, which is where the actual encryption is done.
-    // The JWE compact serialization consists of five base64url encoded parts
-    // combined with a dot ('.') character in the general format of
-    // <header>.<encrypted key>.<initialization vector>.<ciphertext>.<authentication tag>
-    // Direct encryption doesn't use an encrypted key so that field will be an empty string
-    // in this case.
-    String compactSerialization = senderJwe.getCompactSerialization();
-
-    // Do something with the JWE. Like send it to some other party over the clouds
-    // and through the interwebs.
-    System.out.println("JWE compact serialization: " + compactSerialization);
-
-    // That other party, the receiver, can then use JsonWebEncryption to decrypt the message.
-    JsonWebEncryption receiverJwe = new JsonWebEncryption();
-
-    // Set the algorithm constraints based on what is agreed upon or expected from the sender
-    AlgorithmConstraints algConstraints =
-        new AlgorithmConstraints(
-            AlgorithmConstraints.ConstraintType.PERMIT, KeyManagementAlgorithmIdentifiers.DIRECT);
-    receiverJwe.setAlgorithmConstraints(algConstraints);
-    AlgorithmConstraints encConstraints =
-        new AlgorithmConstraints(
-            AlgorithmConstraints.ConstraintType.PERMIT,
-            ContentEncryptionAlgorithmIdentifiers.AES_128_CBC_HMAC_SHA_256);
-    receiverJwe.setContentEncryptionAlgorithmConstraints(encConstraints);
-
-    // Set the compact serialization on new Json Web Encryption object
-    receiverJwe.setCompactSerialization(compactSerialization);
-
-    // Symmetric encryption, like we are doing here, requires that both parties have the same key.
-    // The key will have had to have been securely exchanged out-of-band somehow.
-    receiverJwe.setKey(jwk.getKey());
-
-    // Get the message that was encrypted in the JWE. This step performs the actual decryption
-    // steps.
-    String plaintext = receiverJwe.getPlaintextString();
-
-    // And do whatever you need to do with the clear text message.
     System.out.println("plaintext: " + plaintext);
   }
 }

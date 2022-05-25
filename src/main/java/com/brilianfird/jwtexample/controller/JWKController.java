@@ -1,7 +1,6 @@
 package com.brilianfird.jwtexample.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +16,6 @@ public class JWKController {
     JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
     jsonWebKeySet.addJsonWebKey(ecdsaPublicJsonWebKey);
 
-    return jsonWebKeySet.toJson(JsonWebKey.OutputControlLevel.INCLUDE_SYMMETRIC);
+    return jsonWebKeySet.toJson();
   }
 }
