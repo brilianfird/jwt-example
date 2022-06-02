@@ -71,16 +71,20 @@ public class Jose4j {
 
   @Test
   public void JWS_consume() throws Exception {
-    String jwt = "eyJhbGciOiJub25lIn0.eyJzdWIiOiI3NTYwNzU1ZS1mNDVkLTRlYmItYTA5OC1iODk3MWMwMmViZWYiLCJpYXQiOjE2NTI1NTYyN" +
-                "jYsImV4cCI6MTY1MzE2MTA2NiwiaXNzIjoiaHR0cHM6Ly9jb2RlY3VyYXRlZC5jb20iLCJuYW1lIjoiQnJpbGlhbiBGaXJkYXVzIiw" +
-            "iZW1haWwiOiJicmlsaWFuZmlyZEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.";
+    String jwt =
+        "eyJhbGciOiJub25lIn0.eyJzdWIiOiI3NTYwNzU1ZS1mNDVkLTRlYmItYTA5OC1iODk3MWMwMmViZWYiLCJpYXQiOjE2NTI1NTYyN"
+            + "jYsImV4cCI6MTY1MzE2MTA2NiwiaXNzIjoiaHR0cHM6Ly9jb2RlY3VyYXRlZC5jb20iLCJuYW1lIjoiQnJpbGlhbiBGaXJkYXVzIiw"
+            + "iZW1haWwiOiJicmlsaWFuZmlyZEBnbWFpbC5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.";
 
-    JwtConsumer jwtConsumer = new JwtConsumerBuilder()
-            .setJwsAlgorithmConstraints(AlgorithmConstraints.NO_CONSTRAINTS) // required for NONE alg
+    JwtConsumer jwtConsumer =
+        new JwtConsumerBuilder()
+            .setJwsAlgorithmConstraints(
+                AlgorithmConstraints.NO_CONSTRAINTS) // required for NONE alg
             .setDisableRequireSignature() // disable signature requirement
             .setRequireIssuedAt() // require the JWT to have iat field
             .setRequireExpirationTime() // require the JWT to have exp field
-            .setExpectedIssuer("https://codecurated.com") // expect the iss to be https://codecurated.com
+            .setExpectedIssuer(
+                "https://codecurated.com") // expect the iss to be https://codecurated.com
             .build();
 
     JwtContext jwtContext = jwtConsumer.process(jwt); // process JWT to jwt context
@@ -102,12 +106,12 @@ public class Jose4j {
 
     JwtClaims jwtClaims = new JwtClaims();
     jwtClaims.setSubject("7560755e-f45d-4ebb-a098-b8971c02ebef"); // set sub
-    jwtClaims.setIssuedAtToNow();  // set iat
+    jwtClaims.setIssuedAtToNow(); // set iat
     jwtClaims.setExpirationTimeMinutesInTheFuture(10080); // set exp
     jwtClaims.setIssuer("https://codecurated.com"); // set iss
-    jwtClaims.setStringClaim("name", "Brilian Firdaus");   // set name
-    jwtClaims.setStringClaim("email", "brilianfird@gmail.com");//set email
-    jwtClaims.setClaim("email_verified", true);  //set email_verified
+    jwtClaims.setStringClaim("name", "Brilian Firdaus"); // set name
+    jwtClaims.setStringClaim("email", "brilianfird@gmail.com"); // set email
+    jwtClaims.setClaim("email_verified", true); // set email_verified
 
     JsonWebSignature jws = new JsonWebSignature();
     // Set alg header as HMAC_SHA256
@@ -116,10 +120,11 @@ public class Jose4j {
     jws.setKey(hmacKey);
     jws.setPayload(jwtClaims.toJson());
 
-    String jwt = jws.getCompactSerialization(); //produce eyJ.. JWT
+    String jwt = jws.getCompactSerialization(); // produce eyJ.. JWT
 
     // we don't need NO_CONSTRAINT and disable require signature anymore
-    JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+    JwtConsumer jwtConsumer =
+        new JwtConsumerBuilder()
             .setRequireIssuedAt()
             .setRequireExpirationTime()
             .setExpectedIssuer("https://codecurated.com")
@@ -130,7 +135,7 @@ public class Jose4j {
     // process JWT to jwt context
     JwtContext jwtContext = jwtConsumer.process(jwt);
     // get JWS object
-    JsonWebSignature consumedJWS = (JsonWebSignature)jwtContext.getJoseObjects().get(0);
+    JsonWebSignature consumedJWS = (JsonWebSignature) jwtContext.getJoseObjects().get(0);
     // get claims
     JwtClaims consumedJWTClaims = jwtContext.getJwtClaims();
 
@@ -146,7 +151,8 @@ public class Jose4j {
   @Test
   public void JWK() throws Exception {
 
-    EllipticCurveJsonWebKey ellipticCurveJsonWebKey = EcJwkGenerator.generateJwk(EllipticCurves.P256);
+    EllipticCurveJsonWebKey ellipticCurveJsonWebKey =
+        EcJwkGenerator.generateJwk(EllipticCurves.P256);
     JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
     jsonWebKeySet.addJsonWebKey(ellipticCurveJsonWebKey);
 
@@ -157,21 +163,20 @@ public class Jose4j {
   public void JWS_ES256() throws Exception {
 
     // generate  key
-    EllipticCurveJsonWebKey ellipticCurveJsonWebKey = EcJwkGenerator.generateJwk(EllipticCurves.P256);
+    EllipticCurveJsonWebKey ellipticCurveJsonWebKey =
+        EcJwkGenerator.generateJwk(EllipticCurves.P256);
 
     JsonWebKeySet jsonWebKeySet = new JsonWebKeySet();
     jsonWebKeySet.addJsonWebKey(ellipticCurveJsonWebKey);
 
-
-
     JwtClaims jwtClaims = new JwtClaims();
     jwtClaims.setSubject("7560755e-f45d-4ebb-a098-b8971c02ebef"); // set sub
-    jwtClaims.setIssuedAtToNow();  // set iat
+    jwtClaims.setIssuedAtToNow(); // set iat
     jwtClaims.setExpirationTimeMinutesInTheFuture(10080); // set exp
     jwtClaims.setIssuer("https://codecurated.com"); // set iss
-    jwtClaims.setStringClaim("name", "Brilian Firdaus");   // set name
-    jwtClaims.setStringClaim("email", "brilianfird@gmail.com");//set email
-    jwtClaims.setClaim("email_verified", true);  //set email_verified
+    jwtClaims.setStringClaim("name", "Brilian Firdaus"); // set name
+    jwtClaims.setStringClaim("email", "brilianfird@gmail.com"); // set email
+    jwtClaims.setClaim("email_verified", true); // set email_verified
 
     JsonWebSignature jws = new JsonWebSignature();
     // Set alg header as ECDSA_USING_P256_CURVE_AND_SHA256
@@ -180,10 +185,11 @@ public class Jose4j {
     jws.setKey(ellipticCurveJsonWebKey.getPrivateKey());
     jws.setPayload(jwtClaims.toJson());
 
-    String jwt = jws.getCompactSerialization(); //produce eyJ.. JWT
+    String jwt = jws.getCompactSerialization(); // produce eyJ.. JWT
 
     // we don't need NO_CONSTRAINT and disable require signature anymore
-    JwtConsumer jwtConsumer = new JwtConsumerBuilder()
+    JwtConsumer jwtConsumer =
+        new JwtConsumerBuilder()
             .setRequireIssuedAt()
             .setRequireExpirationTime()
             .setExpectedIssuer("https://codecurated.com")
@@ -194,7 +200,7 @@ public class Jose4j {
     // process JWT to jwt context
     JwtContext jwtContext = jwtConsumer.process(jwt);
     // get JWS object
-    JsonWebSignature consumedJWS = (JsonWebSignature)jwtContext.getJoseObjects().get(0);
+    JsonWebSignature consumedJWS = (JsonWebSignature) jwtContext.getJoseObjects().get(0);
     // get claims
     JwtClaims consumedJWTClaims = jwtContext.getJwtClaims();
 
@@ -204,7 +210,7 @@ public class Jose4j {
     // Assert header, key, and claims
     Assertions.assertEquals(jws.getAlgorithmHeaderValue(), consumedJWS.getAlgorithmHeaderValue());
 
-    //The key won't be equal because it's asymmetric
+    // The key won't be equal because it's asymmetric
     Assertions.assertNotEquals(jws.getKey(), consumedJWS.getKey());
     Assertions.assertEquals(jwtClaims.toJson(), consumedJWTClaims.toJson());
   }
@@ -236,42 +242,35 @@ public class Jose4j {
   }
 
   @Test
-  public void JWE_RSAOAEP256() throws Exception {
+  public void JWE_ECDHES256() throws Exception {
     JwtClaims jwtClaims = new JwtClaims();
-    //        jwtClaims.setIssuer("https://codecurated.com");
-    jwtClaims.setExpirationTimeMinutesInTheFuture(5);
+    jwtClaims.setIssuer("https://codecurated.com");
+    jwtClaims.setExpirationTimeMinutesInTheFuture(300);
     jwtClaims.setIssuedAtToNow();
     jwtClaims.setSubject("12345");
 
-    String alg = KeyManagementAlgorithmIdentifiers.RSA_OAEP_256;
+    String alg = KeyManagementAlgorithmIdentifiers.ECDH_ES_A256KW;
     String encryptionAlgorithm = ContentEncryptionAlgorithmIdentifiers.AES_128_CBC_HMAC_SHA_256;
 
-    RsaJsonWebKey senderJwk = RsaJwkGenerator.generateJwk(2048);
-    //        EllipticCurveJsonWebKey senderJwk = EcJwkGenerator.generateJwk(EllipticCurves.P256);
-
-    Key key = senderJwk.getKey();
+    EllipticCurveJsonWebKey ecJWK = EcJwkGenerator.generateJwk(EllipticCurves.P256);
 
     JsonWebEncryption jwe = new JsonWebEncryption();
     jwe.setPlaintext(jwtClaims.toJson());
     jwe.setAlgorithmHeaderValue(alg);
     jwe.setEncryptionMethodHeaderParameter(encryptionAlgorithm);
-    jwe.setKey(senderJwk.getKey());
+    jwe.setKey(ecJWK.getKey());
     String compactSerialization = jwe.getCompactSerialization();
     System.out.println(compactSerialization);
 
-    JsonWebEncryption receiverJwe = new JsonWebEncryption();
-    AlgorithmConstraints algConstraints =
-        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, alg);
-    AlgorithmConstraints encConstraints =
-        new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.PERMIT, encryptionAlgorithm);
-    receiverJwe.setAlgorithmConstraints(algConstraints);
-    receiverJwe.setContentEncryptionAlgorithmConstraints(encConstraints);
-    receiverJwe.setCompactSerialization(compactSerialization);
-    receiverJwe.setKey(senderJwk.getPrivateKey());
+    JwtConsumer jwtConsumer =
+            new JwtConsumerBuilder()
+                    .setVerificationKey(ecJWK.getPrivateKey())
+                    .setDecryptionKey(ecJWK.getPrivateKey())
+                    .setDisableRequireSignature().build();
 
-    String plaintext = receiverJwe.getPlaintextString();
+    JwtContext jwtContext = jwtConsumer.process(compactSerialization);
 
-    System.out.println("plaintext: " + plaintext);
+    System.out.println(jwtContext.getJwtClaims());
   }
 
   @Test
